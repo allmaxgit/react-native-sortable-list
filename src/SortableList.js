@@ -24,6 +24,7 @@ export default class SortableList extends Component {
 
     renderRow: PropTypes.func.isRequired,
 
+    shouldActivateRow: PropTypes.func,
     onChangeOrder: PropTypes.func,
     onActivateRow: PropTypes.func,
     onReleaseRow: PropTypes.func,
@@ -32,7 +33,8 @@ export default class SortableList extends Component {
   static defaultProps = {
     sortingEnabled: true,
     scrollEnabled: true,
-  }
+    shouldActivateRow: () => true
+  };
 
   /**
    * Stores refs to rows’ components by keys.
@@ -197,6 +199,7 @@ export default class SortableList extends Component {
           style={style}
           location={location}
           onLayout={!rowsLayouts ? this._onLayoutRow.bind(this, resolveLayout, key) : null}
+          shouldActivateRow={this._shouldActivateRow.bind(this, key)}
           onActivate={this._onActivateRow.bind(this, key, index)}
           onRelease={this._onReleaseRow.bind(this, key)}
           onMove={this._onMoveRow}>
@@ -423,6 +426,13 @@ export default class SortableList extends Component {
   _onLayoutRow(resolveLayout, rowKey, {nativeEvent: {layout}}) {
     resolveLayout({rowKey, layout});
   }
+
+  _shouldActivateRow = (rowKey) => {
+    if (this.props.shouldActivateRow) {
+      return this.props.shouldActivateRow(rowKey);
+    }
+    return true;
+  };
 
   _onActivateRow = (rowKey, index, e, gestureState, location) => {
     this._activeRowLocation = location;

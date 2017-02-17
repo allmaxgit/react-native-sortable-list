@@ -15,6 +15,7 @@ export default class Row extends Component {
       y: PropTypes.number,
     }),
 
+    shouldActivateRow: PropTypes.func,
     // Will be called on long press.
     onActivate: PropTypes.func,
     onLayout: PropTypes.func,
@@ -40,8 +41,8 @@ export default class Row extends Component {
   }
 
   _panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => !this._isDisabled(),
-    onMoveShouldSetPanResponder: () => !this._isDisabled(),
+    onStartShouldSetPanResponder: () => !this._isDisabled() && this.props.shouldActivateRow(),
+    onMoveShouldSetPanResponder: () => !this._isDisabled() && this.props.shouldActivateRow(),
 
     onPanResponderGrant: (e, gestureState) => {
       e.persist();
