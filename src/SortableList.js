@@ -28,6 +28,7 @@ export default class SortableList extends Component {
     onChangeOrder: PropTypes.func,
     onActivateRow: PropTypes.func,
     onReleaseRow: PropTypes.func,
+    onPressRow: PropTypes.func
   };
 
   static defaultProps = {
@@ -121,7 +122,7 @@ export default class SortableList extends Component {
 
     for (let rowKey of order) {
       if (rowKey === key) {
-          break;
+        break;
       }
 
       keyY += rowsLayouts[rowKey].height;
@@ -166,8 +167,8 @@ export default class SortableList extends Component {
     const {order, data, activeRowKey, releasedRowKey, rowsLayouts} = this.state;
 
     const rowWidth = rowsLayouts && Math.max(
-      ...Object.keys(rowsLayouts).map((key) => rowsLayouts[key].width)
-    );
+        ...Object.keys(rowsLayouts).map((key) => rowsLayouts[key].width)
+      );
     let nextY = 0;
 
     return order.map((key, index) => {
@@ -199,9 +200,10 @@ export default class SortableList extends Component {
           style={style}
           location={location}
           onLayout={!rowsLayouts ? this._onLayoutRow.bind(this, resolveLayout, key) : null}
-          shouldActivateRow={this._shouldActivateRow.bind(this, key)}
+          shouldActivate={this._shouldActivateRow.bind(this, key)}
           onActivate={this._onActivateRow.bind(this, key, index)}
           onRelease={this._onReleaseRow.bind(this, key)}
+          onPress={this._onPressRow.bind(this, key)}
           onMove={this._onMoveRow}>
           {renderRow({
             key,
@@ -463,6 +465,12 @@ export default class SortableList extends Component {
     }
   };
 
+  _onPressRow = (rowKey) => {
+    if (this.props.onPressRow) {
+      this.props.onPressRow(rowKey);
+    }
+  }
+
   _onMoveRow = (e, gestureState, location) => {
     const prevMovingRowY = this._activeRowLocation.y;
     const prevMovingDirection = this._movingDirection;
@@ -477,7 +485,7 @@ export default class SortableList extends Component {
   };
 
   _onScroll = ({nativeEvent: {contentOffset}}) => {
-      this._contentOffset = contentOffset;
+    this._contentOffset = contentOffset;
   };
 
   _onRefContainer = (animatedComponent) => {

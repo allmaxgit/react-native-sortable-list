@@ -15,7 +15,8 @@ export default class Row extends Component {
       y: PropTypes.number,
     }),
 
-    shouldActivateRow: PropTypes.func,
+    onPress: PropTypes.func,
+    shouldActivate: PropTypes.func,
     // Will be called on long press.
     onActivate: PropTypes.func,
     onLayout: PropTypes.func,
@@ -41,8 +42,8 @@ export default class Row extends Component {
   }
 
   _panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => !this._isDisabled() && this.props.shouldActivateRow(),
-    onMoveShouldSetPanResponder: () => !this._isDisabled() && this.props.shouldActivateRow(),
+    onStartShouldSetPanResponder: () => !this._isDisabled() && this.props.shouldActivate(),
+    onMoveShouldSetPanResponder: () => !this._isDisabled() && this.props.shouldActivate(),
 
     onPanResponderGrant: (e, gestureState) => {
       e.persist();
@@ -130,8 +131,8 @@ export default class Row extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     return this.props.disabled !== nextProps.disabled ||
-           this.props.children !== nextProps.children ||
-           !shallowEqual(this.props.style, nextProps.style);
+      this.props.children !== nextProps.children ||
+      !shallowEqual(this.props.style, nextProps.style);
   }
 
   moveBy({dx = 0, dy = 0, animated = false}) {
@@ -192,9 +193,9 @@ export default class Row extends Component {
   }
 
   _isDisabled() {
-      return this.props.disabled ||
-        this._isAnimationRunning && this.props.disabledDuringAnimation;
-    }
+    return this.props.disabled ||
+      this._isAnimationRunning && this.props.disabledDuringAnimation;
+  }
 
   _isTouchInsideElement({nativeEvent}) {
     return this._layout &&
@@ -209,11 +210,11 @@ export default class Row extends Component {
   };
 
   _onLayout = (e) => {
-      this._layout = e.nativeEvent.layout;
+    this._layout = e.nativeEvent.layout;
 
-      if (this.props.onLayout) {
-          this.props.onLayout(e);
-      }
+    if (this.props.onLayout) {
+      this.props.onLayout(e);
+    }
   };
 }
 
