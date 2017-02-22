@@ -42,23 +42,24 @@ export default class Row extends Component {
   }
 
   _panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => !this._isDisabled() && this.props.shouldActivate(),
-    onMoveShouldSetPanResponder: () => !this._isDisabled() && this.props.shouldActivate(),
+    onStartShouldSetPanResponder: () => !this._isDisabled() /* && this.props.shouldActivate() */,
+    onMoveShouldSetPanResponder: () => !this._isDisabled() /* && this.props.shouldActivate() */,
 
     onPanResponderGrant: (e, gestureState) => {
       e.persist();
       this._wasLongPress = false;
-
-      this._longPressTimer = setTimeout(() => {
-        this._wasLongPress = true;
-        this._target = e.nativeEvent.target;
-        this._prevGestureState = {
-          ...gestureState,
-          moveX: gestureState.x0,
-          moveY: gestureState.y0,
-        };
-        this._toggleActive(e, gestureState);
-      }, ACTIVATION_DELAY);
+      if (this.props.shouldActivate()) {
+        this._longPressTimer = setTimeout(() => {
+          this._wasLongPress = true;
+          this._target = e.nativeEvent.target;
+          this._prevGestureState = {
+            ...gestureState,
+            moveX: gestureState.x0,
+            moveY: gestureState.y0,
+          };
+          this._toggleActive(e, gestureState);
+        }, ACTIVATION_DELAY);
+      }
     },
 
     onPanResponderMove: (e, gestureState) => {
