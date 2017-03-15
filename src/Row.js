@@ -42,8 +42,16 @@ export default class Row extends Component {
   }
 
   _panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => !this._isDisabled() /* && this.props.shouldActivate() */,
-    onMoveShouldSetPanResponder: () => !this._isDisabled() /* && this.props.shouldActivate() */,
+    onStartShouldSetPanResponder: () => !this._isDisabled(),
+
+    onMoveShouldSetPanResponder: () => !this._isDisabled(),
+
+    onShouldBlockNativeResponder: () => {
+      // Returns whether this component should block native components from becoming the JS
+      // responder. Returns true by default. Is currently only supported on android.
+      // NOTE: Returning false here allows us to scroll unless it's a long press on a row.
+      return false;
+    },
 
     onPanResponderGrant: (e, gestureState) => {
       e.persist();
@@ -108,7 +116,7 @@ export default class Row extends Component {
       return true;
     },
 
-    onPanResponderTerminate: () => {
+    onPanResponderTerminate: (e, gestureState) => {
       this._cancelLongPress();
 
       // If responder terminated while dragging,
@@ -132,8 +140,8 @@ export default class Row extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     return this.props.disabled !== nextProps.disabled ||
-      this.props.children !== nextProps.children ||
-      !shallowEqual(this.props.style, nextProps.style);
+           this.props.children !== nextProps.children ||
+           !shallowEqual(this.props.style, nextProps.style);
   }
 
   moveBy({dx = 0, dy = 0, animated = false}) {
@@ -194,8 +202,8 @@ export default class Row extends Component {
   }
 
   _isDisabled() {
-    return this.props.disabled ||
-      this._isAnimationRunning && this.props.disabledDuringAnimation;
+      return this.props.disabled ||
+        this._isAnimationRunning && this.props.disabledDuringAnimation;
   }
 
   _isTouchInsideElement({nativeEvent}) {
@@ -211,11 +219,11 @@ export default class Row extends Component {
   };
 
   _onLayout = (e) => {
-    this._layout = e.nativeEvent.layout;
+      this._layout = e.nativeEvent.layout;
 
-    if (this.props.onLayout) {
-      this.props.onLayout(e);
-    }
+      if (this.props.onLayout) {
+          this.props.onLayout(e);
+      }
   };
 }
 
