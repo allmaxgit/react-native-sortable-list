@@ -168,8 +168,8 @@ export default class SortableList extends Component {
     const {order, data, activeRowKey, releasedRowKey, rowsLayouts} = this.state;
 
     const rowWidth = rowsLayouts && Math.max(
-        ...Object.keys(rowsLayouts).map((key) => rowsLayouts[key].width)
-      );
+      ...Object.keys(rowsLayouts).map((key) => rowsLayouts[key].width)
+    );
     let nextY = 0;
 
     return order.map((key, index) => {
@@ -203,8 +203,8 @@ export default class SortableList extends Component {
           onLayout={!rowsLayouts ? this._onLayoutRow.bind(this, resolveLayout, key) : null}
           shouldActivate={this._shouldActivateRow.bind(this, key)}
           onActivate={this._onActivateRow.bind(this, key, index)}
-          onRelease={this._onReleaseRow.bind(this, key)}
           onPress={this._onPressRow.bind(this, key)}
+          onRelease={this._onReleaseRow.bind(this, key)}
           onMove={this._onMoveRow}>
           {renderRow({
             key,
@@ -452,6 +452,12 @@ export default class SortableList extends Component {
     }
   };
 
+  _onPressRow = (rowKey) => {
+    if (this.props.onPressRow) {
+      this.props.onPressRow(rowKey);
+    }
+  };
+
   _onReleaseRow = (rowKey) => {
     this._stopAutoScroll();
     this.setState(({activeRowKey}) => ({
@@ -465,12 +471,6 @@ export default class SortableList extends Component {
       this.props.onReleaseRow(rowKey);
     }
   };
-
-  _onPressRow = (rowKey) => {
-    if (this.props.onPressRow) {
-      this.props.onPressRow(rowKey);
-    }
-  }
 
   _onMoveRow = (e, gestureState, location) => {
     const prevMovingRowY = this._activeRowLocation.y;
