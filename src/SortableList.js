@@ -245,12 +245,14 @@ export default class SortableList extends Component {
   _animateRowsAppearance(onAnimationEnd) {
     Animated.timing(this.state.style.opacity, {
       toValue: 1,
+      duration: 0,
     }).start(onAnimationEnd);
   }
 
   _animateRowsDisappearance(onAnimationEnd) {
     Animated.timing(this.state.style.opacity, {
       toValue: 0,
+      duration: 0,
     }).start(onAnimationEnd);
   }
 
