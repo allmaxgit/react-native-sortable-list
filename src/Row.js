@@ -9,15 +9,15 @@ export default class Row extends Component {
     children: PropTypes.node,
     animated: PropTypes.bool,
     disabled: PropTypes.bool,
+    horizontal: PropTypes.bool,
     style: Animated.View.propTypes.style,
     location: PropTypes.shape({
       x: PropTypes.number,
       y: PropTypes.number,
     }),
 
-    onPress: PropTypes.func,
-    shouldActivate: PropTypes.func,
     // Will be called on long press.
+    shouldActivate: PropTypes.func,
     onActivate: PropTypes.func,
     onLayout: PropTypes.func,
     onPress: PropTypes.func,
@@ -197,9 +197,9 @@ export default class Row extends Component {
   }
 
   _mapGestureToMove(prevGestureState, gestureState) {
-    return {
-      dy: gestureState.moveY - prevGestureState.moveY,
-    };
+    return this.props.horizontal
+      ? {dx: gestureState.moveX - prevGestureState.moveX}
+      : {dy: gestureState.moveY - prevGestureState.moveY};
   }
 
   _isDisabled() {
