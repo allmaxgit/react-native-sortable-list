@@ -1,7 +1,9 @@
 import React, {Component, PropTypes} from 'react';
-import {ScrollView, View, StyleSheet, Platform, RefreshControl} from 'react-native';
+import {ScrollView, View, StyleSheet, Platform, RefreshControl, Dimensions} from 'react-native';
 import {shallowEqual, swapArrayElements} from './utils';
 import Row from './Row';
+
+const { width, height } = Dimensions.get('window');
 
 const AUTOSCROLL_INTERVAL = 100;
 const ZINDEX = Platform.OS === 'ios' ? 'zIndex' : 'elevation';
@@ -45,7 +47,8 @@ export default class SortableList extends Component {
    * Stores refs to rows’ components by keys.
    */
   _rows = {};
-
+  rowWidthHack = (width < height ? width : height) - (70 * (width / 750));
+  rowHeightHack = 150 * (width / 750);
   /**
    * Stores promises of rows’ layouts.
    */
@@ -127,7 +130,7 @@ export default class SortableList extends Component {
 
     for (const rowKey of order) {
       if (rowKey === key) {
-          break;
+        break;
       }
 
       keyX += rowsLayouts[rowKey].width;
@@ -197,13 +200,15 @@ export default class SortableList extends Component {
 
     if (rowsLayouts) {
       Object.keys(rowsLayouts).forEach((key) => {
-        rowHeight = Math.max(rowHeight, rowsLayouts[key].height);
-        rowWidth = Math.max(rowWidth, rowsLayouts[key].width);
+        rowHeight = Math.max(rowHeight, this.rowHeightHack);
+        rowWidth = Math.max(rowWidth, this.rowWidthHack);
       });
     }
 
     let nextX = 0;
     let nextY = 0;
+
+    this._rowsLayouts = []
 
     return order.map((key, index) => {
       const style = {[ZINDEX]: 0};
@@ -214,14 +219,14 @@ export default class SortableList extends Component {
         if (horizontal) {
           style.height = rowHeight;
           location.x = nextX;
-          nextX += rowsLayouts[key].width;
+          nextX += this.rowWidthHack;
         } else {
           style.width = rowWidth;
           location.y = nextY;
-          nextY += rowsLayouts[key].height;
+          nextY += this.rowHeightHack;
         }
       } else {
-        this._rowsLayouts.push(new Promise((resolve) => (resolveLayout = resolve)));
+        this._rowsLayouts.push(new Promise((resolve) => (resolve(resolveLayout = resolve))));
       }
 
       const active = activeRowKey === key;
@@ -278,8 +283,8 @@ export default class SortableList extends Component {
   }
 
   _onUpdateLayouts() {
-    Promise.all([this._footerLayout, ...this._rowsLayouts])
-      .then(([footerLayout, ...rowsLayouts]) => {
+    Promise.all([...this._rowsLayouts])
+      .then(([...rowsLayouts]) => {
         // Can get correct container’s layout only after rows’s layouts.
         this._container.measure((x, y, width, height, pageX, pageY) => {
           const rowsLayoutsByKey = {};
@@ -287,15 +292,15 @@ export default class SortableList extends Component {
           let contentWidth = 0;
 
           rowsLayouts.forEach(({rowKey, layout}) => {
-            rowsLayoutsByKey[rowKey] = layout;
-            contentHeight += layout.height;
-            contentWidth += layout.width;
+            rowsLayoutsByKey[rowKey] = {y: 0, x: 0, width: this.rowWidthHack, height: this.rowHeightHack};
+            contentHeight += this.rowHeightHack;
+            contentWidth += this.rowWidthHack;
           });
 
           this.setState({
             containerLayout: {x, y, width, height, pageX, pageY},
             rowsLayouts: rowsLayoutsByKey,
-            footerLayout,
+            // footerLayout,
             contentHeight,
             contentWidth,
           }, () => {
@@ -363,9 +368,9 @@ export default class SortableList extends Component {
     const {rowsLayouts, activeRowKey, activeRowIndex, order} = this.state;
     const movingRowLayout = rowsLayouts[activeRowKey];
     const rowLeftX = this._activeRowLocation.x
-    const rowRightX = rowLeftX + movingRowLayout.width;
+    const rowRightX = rowLeftX + this.rowWidthHack;
     const rowTopY = this._activeRowLocation.y;
-    const rowBottomY = rowTopY + movingRowLayout.height;
+    const rowBottomY = rowTopY + this.rowHeightHack;
 
     for (
       let currentRowIndex = 0, x = 0, y = 0, rowsCount = order.length;
@@ -377,14 +382,14 @@ export default class SortableList extends Component {
       const nextRowIndex = currentRowIndex + 1;
       const nextRowLayout = rowsLayouts[order[nextRowIndex]];
 
-      x += currentRowLayout.width;
-      y += currentRowLayout.height;
+      x += this.rowWidthHack;
+      y += this.rowHeightHack;
 
       if (currentRowKey !== activeRowKey && (
-        horizontal
-          ? ((x - currentRowLayout.width <= rowLeftX || currentRowIndex === 0) && rowLeftX <= x - currentRowLayout.width / 3)
-          : ((y - currentRowLayout.height <= rowTopY || currentRowIndex === 0) && rowTopY <= y - currentRowLayout.height / 3)
-      )) {
+          horizontal
+            ? ((x - this.rowWidthHack <= rowLeftX || currentRowIndex === 0) && rowLeftX <= x - this.rowWidthHack / 3)
+            : ((y - this.rowHeightHack <= rowTopY || currentRowIndex === 0) && rowTopY <= y - this.rowHeightHack / 3)
+        )) {
         return {
           rowKey: order[currentRowIndex],
           rowIndex: currentRowIndex,
@@ -392,8 +397,8 @@ export default class SortableList extends Component {
       }
 
       if (horizontal
-        ? (x + nextRowLayout.width / 3 <= rowRightX && (rowRightX <= x + nextRowLayout.width || nextRowIndex === rowsCount - 1))
-        : (y + nextRowLayout.height / 3 <= rowBottomY && (rowBottomY <= y + nextRowLayout.height || nextRowIndex === rowsCount - 1))
+          ? (x + this.rowWidthHack / 3 <= rowRightX && (rowRightX <= x + this.rowWidthHack || nextRowIndex === rowsCount - 1))
+          : (y + this.rowHeightHack / 3 <= rowBottomY && (rowBottomY <= y + this.rowHeightHack || nextRowIndex === rowsCount - 1))
       ) {
         return {
           rowKey: order[nextRowIndex],
@@ -416,8 +421,8 @@ export default class SortableList extends Component {
       inAutoScrollBeginArea = pageX < containerLayout.pageX + this.props.autoscrollAreaSize;
       inAutoScrollEndArea = pageX > containerLayout.pageX + containerLayout.width - this.props.autoscrollAreaSize;
     } else {
-      inAutoScrollBeginArea = pageY < containerLayout.pageY + this.props.autoscrollAreaSize;
-      inAutoScrollEndArea = pageY > containerLayout.pageY + containerLayout.height - this.props.autoscrollAreaSize;
+      inAutoScrollBeginArea = pageY < 120;
+      inAutoScrollEndArea = pageY > 508;
     }
 
     if (!inAutoScrollBeginArea &&
@@ -454,10 +459,13 @@ export default class SortableList extends Component {
             footerLayout = {height: 0},
           } = this.state;
 
+          let containerLayoutHack = height - 68 > (this.rowHeightHack + 1) * this.state.order.length ?
+            (this.rowHeightHack + 1) * this.state.order.length : height - 68
+
           if (horizontal) {
             return this._contentOffset.x < contentWidth - containerLayout.width
           } else {
-            return this._contentOffset.y < contentHeight + footerLayout.height - containerLayout.height;
+            return this._contentOffset.y < contentHeight  - containerLayoutHack;
           }
         },
         getScrollStep: (stepIndex) => {
@@ -469,12 +477,15 @@ export default class SortableList extends Component {
             footerLayout = {height: 0},
           } = this.state;
 
+          let containerLayoutHack = height - 68 > (this.rowHeightHack + 1) * this.state.order.length ?
+            (this.rowHeightHack + 1) * this.state.order.length : height - 68
+
           if (horizontal) {
             return this._contentOffset.x + nextStep > contentWidth - containerLayout.width
               ? contentWidth - containerLayout.width - this._contentOffset.x
               : nextStep;
           } else {
-            const scrollHeight = contentHeight + footerLayout.height - containerLayout.height;
+            const scrollHeight = contentHeight - containerLayoutHack;
 
             return this._contentOffset.y + nextStep > scrollHeight
               ? scrollHeight - this._contentOffset.y
